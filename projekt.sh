@@ -184,8 +184,14 @@ list_users_in_group()
 	echo "----------------------------------------------------------"
 	echo "Enter the name of the group whose members you want to view"
 	read GROUP
-	echo "------------------------MEMBERS---------------------------"
-	getent group | grep $GROUP | cut -d: -f1 | pr --columns=4 --length=1
+	getent group | cut -d: -f4 | grep $GROUP &> /dev/null
+	if [ $? -eq 0 ] ; then
+		echo "------------------------MEMBERS---------------------------"
+		getent group | grep $GROUP | cut -d: -f1 | pr --columns=4 --length=1
+	else
+		echo "That group does not exist."
+	fi
+
 }
 
 add_user_to_group()
@@ -210,14 +216,17 @@ modify_group()
 	list_all_groups
 	sudo echo "----------------------------------"
 	echo "Which group do you want to modify?"
-	read GROUP
 	while true ; do
-		echo "Users in $GROUP"
-		echo "------------------------MEMBERS----------------------------"
-		getent group | grep $GROUP | cut -d: -f1 | pr --columns=4 --length=1
+		read GROUP
+		getent group | cut -d: -f1 | pr --columns=4 --length=1 | grep $GROUP &> /dev/null
 		if [ ! $? -eq 0 ] ; then
 			echo "$GROUP does not exist."
+			echo " "
 		else
+			echo " "
+			echo "Users in $GROUP"
+			echo "------------------------MEMBERS----------------------------"
+			getent group | cut -d: -f1 | pr --columns=4 --length=1 | grep $GROUP 
 			echo "-----------------------------------------------------------"
 			echo "1)                Remove a user"
 			echo "2)                Add a user"
