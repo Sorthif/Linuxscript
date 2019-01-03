@@ -28,9 +28,13 @@ add_user()
 {
 	sudo echo "Enter a user name."
 	read USER
-	sudo useradd $USER
-	if [ $? -eq 0 ] ; then
+	sudo useradd $USER &> /dev/null
+	RESPONSE=$?
+	if [ $RESPONSE -eq 0 ] ; then
 		echo "$USER has been added to the system."
+	elif [ $RESPONSE -eq 9 ] ; then
+		sudo useradd -g $USER $USER
+		echo "$USER has been added to the system and group $USER."
 	fi
 }
 
@@ -62,7 +66,9 @@ END
 
 view_user()
 {
-	sudo echo "Which user would you like to see?"
+	list_all_users
+	sudo echo "--------------------------------"
+	echo "Which user would you like to see?"
 	read USER
 	getent passwd | egrep ^$USER: > /dev/null
 
@@ -441,24 +447,23 @@ list_folder_attributes()
 install_ssh()
 {
 	sudo apt install openssh-server
-	if [ $? -eq 0 ] ; then
-		echo " "
-		echo "SSH is successfully installed!"
-	fi
+	echo " "
 }
 
 remove_ssh()
 {
 	sudo apt-get --purge remove openssh-server
-	if [ $? -eq 0 ] ; then
-		echo " "
-		echo "SSH is successfully removed!"
-	fi
+	echo " "
 }
 
 status_ssh()
 {
-	/etc/init.d/ssh status
+	/etc/init.d/ssh status &> /dev/null
+	if [ $? -eq 127 ] ; then
+		echo "SSH is not installed!"
+	else
+		/etc/init.d/ssh status
+	fi
 }
 
 ssh_is_on()
@@ -532,6 +537,7 @@ END
 
 while [ "$INPUT" != "q" ]
 do
+	FLAG=0
 	print_main_menu
 	read INPUT
 	clear
@@ -594,5 +600,4 @@ do
 	if [ $FLAG -eq 0 ] ; then	
 		read -p "press enter to continue"
 	fi
-	FLAG=0
 done
