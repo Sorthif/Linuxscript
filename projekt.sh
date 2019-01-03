@@ -33,7 +33,7 @@ add_user()
 	fi
 }
 
-change_user_passwd() 
+change_user_passwd()
 {
 	sudo echo "For which user would you like to change the password?"
 	read USER
@@ -45,13 +45,13 @@ change_user_passwd()
 
 show_user()
 {
-	GROUP=`getent passwd | grep $USER | cut --delimiter=':' -f 4`			
+	GROUP=`getent passwd | grep $USER | cut --delimiter=':' -f 4`
 cat <<END
 `getent passwd | grep $USER | cut --delimiter=':' -f 1`	ID:`getent passwd | grep $USER | cut --delimiter=':' -f 3`
 -----------------------------------------------------------
 User:           `getent passwd | grep $USER | cut --delimiter=':' -f 1`
 User ID:        `getent passwd | grep $USER | cut --delimiter=':' -f 3`
-Group:          `getent group | grep $GROUP | cut --delimiter=':' -f 1`	
+Group:          `getent group | grep $GROUP | cut --delimiter=':' -f 1`
 Group ID:       $GROUP
 Password:       `getent passwd | grep $USER | cut --delimiter=':' -f 2`
 Comment:        `getent passwd | grep $USER | cut --delimiter=':' -f 5`
@@ -69,7 +69,7 @@ view_user()
 
 	if [ ! $? -eq 0 ] ; then
 		getent passwd | grep $USER > /dev/null
-		echo "That user does not exist."	
+		echo "That user does not exist."
 	else
 	show_user
 	fi
@@ -85,8 +85,9 @@ change_user_attribute()
 
 	if [ ! $? -eq 0 ] ; then
 		getent passwd | grep $USER > /dev/null
-		echo "$USER does not exist."	
+		echo "$USER does not exist."
 	else
+		clear
 		while true; do
 			show_user
 			echo "What attributes of $USER would you like to change?"
@@ -108,6 +109,7 @@ END
 				sudo usermod -l $NEWUSER $USER
 				if [ $? -eq 0 ] ; then
 					echo "$USER's name is $NEWUSER."
+					USER=$NEWUSER
 				fi
 				;;
 			2)
@@ -116,7 +118,7 @@ END
 				sudo usermod -u $ID $USER
 				if [ $? -eq 0 ] ; then
 					echo "$USER's ID is $ID."
-				fi		
+				fi
 				;;
 			3)
 				list_all_groups
@@ -124,9 +126,9 @@ END
 				echo "Enter the name of $USER's new primary group:"
 				read NEWGROUP
 				sudo usermod -g $NEWGROUP $USER
-				if [ $? -eq 0 ] ; then			
+				if [ $? -eq 0 ] ; then
 					echo "$USER's primary group is $NEWGROUP"
-				fi						
+				fi
 				;;
 			4)
 				echo "Enter the new home directory:"
@@ -137,11 +139,12 @@ END
 				fi
 				;;
 			5)
+				cat /etc/shells
 				echo "Enter the new default shell:"
 				read SHELL
 				sudo usermod -s $SHELL $USER
 				if [ $? -eq 0 ] ; then
-					echo "$USER's shell is $SHELL."	
+					echo "$USER's shell is $SHELL."
 				fi
 				;;
 			6)
@@ -149,13 +152,14 @@ END
 				read COMMENT
 				sudo usermod -c $COMMENT $USER
 				if [ $? -eq 0 ] ; then
-					echo "$USER's comment is $COMMENT."	
+					echo "$USER's comment is $COMMENT."
 				fi
 				;;
 			0)
 				break
 				;;
 			esac
+			clear
 		done
 	fi
 }
@@ -174,7 +178,7 @@ create_group()
 	read GROUP
 	sudo groupadd $GROUP
 	if [ $? -eq 0 ] ; then
-		echo "$GROUP has been successfully added."	
+		echo "$GROUP has been successfully added."
 	fi
 }
 
@@ -184,10 +188,10 @@ list_users_in_group()
 	echo "----------------------------------------------------------"
 	echo "Enter the name of the group whose members you want to view"
 	read GROUP
-	getent group | cut -d: -f4 | grep $GROUP &> /dev/null
+	getent group | cut -d: -f1 | grep $GROUP &> /dev/null
 	if [ $? -eq 0 ] ; then
 		echo "------------------------MEMBERS---------------------------"
-		getent group | grep $GROUP | cut -d: -f1 | pr --columns=4 --length=1
+		getent group | egrep ^$GROUP | cut -d: -f4
 	else
 		echo "That group does not exist."
 	fi
@@ -216,17 +220,17 @@ modify_group()
 	list_all_groups
 	sudo echo "----------------------------------"
 	echo "Which group do you want to modify?"
-	while true ; do
-		read GROUP
-		getent group | cut -d: -f1 | pr --columns=4 --length=1 | grep $GROUP &> /dev/null
-		if [ ! $? -eq 0 ] ; then
-			echo "$GROUP does not exist."
-			echo " "
-		else
+	read GROUP
+	getent group | cut -d: -f1 | grep $GROUP &> /dev/null
+	if [ ! $? -eq 0 ] ; then
+		echo "$GROUP does not exist."
+		echo " "
+	else
+		while true ; do
 			echo " "
 			echo "Users in $GROUP"
 			echo "------------------------MEMBERS----------------------------"
-			getent group | cut -d: -f1 | pr --columns=4 --length=1 | grep $GROUP 
+			getent group | egrep ^$GROUP | cut -d: -f 4
 			echo "-----------------------------------------------------------"
 			echo "1)                Remove a user"
 			echo "2)                Add a user"
@@ -242,10 +246,10 @@ modify_group()
 					;;
 				0)
 					break
-					;;										
+					;;
 			esac
-		fi			
-	done
+		done
+	fi
 }
 
 list_all_groups()
@@ -259,7 +263,7 @@ list_all_groups()
 create_folder()
 {
 	echo "What is the name for the new folder?"
-	read FOLDERNAME	
+	read FOLDERNAME
 	sudo mkdir $FOLDERNAME
 	if [ $? -eq 0 ] ; then
 		echo "$FOLDERNAME added to `pwd`"
@@ -268,7 +272,7 @@ create_folder()
 
 list_folders()
 {
-	sudo ls
+	sudo ls -d */
 }
 
 view_folder()
@@ -276,7 +280,6 @@ view_folder()
 	list_folders
 	echo "---------------------------------------------------"
 	echo "Which folder would you like to see the contents of?"
-
 	read FOLDERNAME
 	sudo ls -l $FOLDERNAME
 }
@@ -339,13 +342,13 @@ cat <<END
 4)               Last modified
 5)               Permissions
 
-0)               Exit
+0)               Done
 END
 		read CHOICE
 		case $CHOICE in
 		1)
 			echo "Enter a new owner for $FOLDERNAME"
-			read OWNER		
+			read OWNER
 			sudo chown $OWNER $FOLDERNAME
 			if [ $? -eq 0 ] ; then
 				echo "Owner for $FOLDERNAME successfully changed to $OWNER!"
@@ -356,7 +359,7 @@ END
 			read GROUP
 			sudo chown :$GROUP $FOLDERNAME
 			if [ $? -eq 0 ] ; then
-				echo "Group owner for $FOLDERNAME successfully changed to $GROUP."	
+				echo "Group owner for $FOLDERNAME successfully changed to $GROUP."
 			fi
 			;;
 		3)
@@ -382,27 +385,36 @@ END
 
 			echo "		 Set user permission."
 			print_permission_menu
+			echo "Input:"
 			read USER
 			echo " "
 
 			echo "		 Set group permission."
 			print_permission_menu
+			echo "Input:"
 			read GROUP
 			echo " "
 
 			echo "		 Set other permission."
 			print_permission_menu
+			echo "Input:"
 			read OTHER
 			echo " "
 
 			clear
-			sudo chmod "$USER$GROUP$OTHER" $FOLDERNAME
+			if [[ $ISSTICKY == "ON" ]]; then
+				sudo chmod "$USER$GROUP$OTHER" $FOLDERNAME
+				sudo chmod +t $FOLDERNAME
+			else
+				sudo chmod "$USER$GROUP$OTHER" $FOLDERNAME
+			fi
 			list_folder_attributes_help
 			;;
 		0)
 			break
 			;;
 		esac
+		read -p "Press enter to continue"
 	done
 }
 
@@ -413,14 +425,14 @@ list_folder_attributes()
 	echo "Which folder would you like to see the attributes of?"
 	read FOLDERNAME
 	list_folder_attributes_help
-}	
+}
 
 ###########################################################
 #                        SSH                              #
 ###########################################################
 install_ssh()
 {
-	sudo apt install ssh
+	sudo apt install openssh-server
 	if [ $? -eq 0 ] ; then
 		echo " "
 		echo "SSH is successfully installed!"
@@ -429,7 +441,7 @@ install_ssh()
 
 remove_ssh()
 {
-	sudo apt-get --purge remove ssh
+	sudo apt-get --purge remove openssh-server
 	if [ $? -eq 0 ] ; then
 		echo " "
 		echo "SSH is successfully removed!"
@@ -454,13 +466,11 @@ ssh_is_on()
 ssh_on_off()
 {
 	case $SSHSTATUS in
-	"OFF")	
+	"OFF")
 		sudo /etc/init.d/ssh start
-		echo "SSH has been turned on."
 		;;
 	"ON")
 		sudo /etc/init.d/ssh stop
-		echo "SSH has been turned off."
 		;;
 	esac
 }
@@ -475,25 +485,25 @@ cat <<END
 ====================================================
 		  GROUP
 ----------------------------------------------------
-1)                Add group                   
-2)                List groups                  
-3)                View a group                  
-4)                Modify a group                
+1)                Add group
+2)                List groups
+3)                View a group
+4)                Modify a group
 
 		  USER
 ----------------------------------------------------
-5)                Add user                   
-6)                List users                   
-7)                View a user                  
-8)                Modify a user                
-9)                Change a users password        
+5)                Add user
+6)                List users
+7)                View a user
+8)                Modify a user
+9)                Change a users password
 
 		  FOLDER
 ----------------------------------------------------
-10)               Create a folder               
-11)               List folders           
-12)               View contents of a folder         
-13)               Modify a folder          
+10)               Create a folder
+11)               List folders
+12)               View contents of a folder
+13)               Modify a folder
 14)               List a folder's attributes
 
 		  SSH
@@ -505,16 +515,12 @@ cat <<END
 ====================================================
 0)                Exit program
 
-Enter action: 
+Enter action:
 END
 }
 
 ###########################################################
 #                        MAIN                             #
-###########################################################
-
-###### OBS TA BORT SEN!!!!!!!!!!!!!!!!!! ##################
-cd /home/
 ###########################################################
 
 while [ "$INPUT" != "q" ]
