@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#
 # GENERAL DESIGN CHOICES
 # We used the error and success messages native to the
 # commands we used when available, else we used $? to write
@@ -23,6 +23,7 @@
 ###########################################################
 #                        USERS                            #
 ###########################################################
+
 add_user()
 {
 	sudo echo "Enter a user name."
@@ -35,8 +36,6 @@ add_user()
 
 change_user_passwd()
 {
-	sudo echo "For which user would you like to change the password?"
-	read USER
 	sudo passwd $USER
 	if [ $? -eq 0 ] ; then
 		echo "Password updated for $USER!"
@@ -98,6 +97,7 @@ cat <<END
 4)               Home directory
 5)               Shell Directory
 6)               Comment
+7)               User password
 
 0)               Done
 END
@@ -155,7 +155,11 @@ END
 					echo "$USER's comment is $COMMENT."
 				fi
 				;;
+			7)
+				change_user_passwd
+				;;
 			0)
+				FLAG=1
 				break
 				;;
 			esac
@@ -172,6 +176,7 @@ list_all_users()
 ###########################################################
 #                        GROUPS                           #
 ###########################################################
+
 create_group()
 {
 	sudo echo "Enter name of the new group"
@@ -195,7 +200,6 @@ list_users_in_group()
 	else
 		echo "That group does not exist."
 	fi
-
 }
 
 add_user_to_group()
@@ -245,6 +249,7 @@ modify_group()
 					add_user_to_group
 					;;
 				0)
+					FLAG=1
 					break
 					;;
 			esac
@@ -260,6 +265,7 @@ list_all_groups()
 ###########################################################
 #                        FOLDERS                          #
 ###########################################################
+
 create_folder()
 {
 	echo "What is the name for the new folder?"
@@ -411,6 +417,7 @@ END
 			list_folder_attributes_help
 			;;
 		0)
+			FLAG=1
 			break
 			;;
 		esac
@@ -430,6 +437,7 @@ list_folder_attributes()
 ###########################################################
 #                        SSH                              #
 ###########################################################
+
 install_ssh()
 {
 	sudo apt install openssh-server
@@ -485,33 +493,32 @@ cat <<END
 ====================================================
 		  GROUP
 ----------------------------------------------------
-1)                Add group
-2)                List groups
-3)                View a group
+1)                Add a group
+2)                List all groups
+3)                View members of a group
 4)                Modify a group
 
 		  USER
 ----------------------------------------------------
-5)                Add user
-6)                List users
+5)                Add a user
+6)                List all users
 7)                View a user
 8)                Modify a user
-9)                Change a users password
 
 		  FOLDER
 ----------------------------------------------------
-10)               Create a folder
-11)               List folders
-12)               View contents of a folder
-13)               Modify a folder
-14)               List a folder's attributes
+9)                Create a folder
+10)               List all folders
+11)               View contents of a folder
+12)               Modify a folder
+13)               List a folder's attributes
 
 		  SSH
 ----------------------------------------------------
-15)               Install/Update
-16)               Uninstall
-17)               Check status
-18)               Toggle on/off ($SSHSTATUS)
+14)               Install/Update
+15)               Uninstall
+16)               Check status
+17)               Toggle on/off ($SSHSTATUS)
 ====================================================
 0)                Exit program
 
@@ -554,38 +561,38 @@ do
 			change_user_attribute
 			;;
 		9)
-			change_user_passwd
-			;;
-		10)
 			create_folder
 			;;
-		11)
+		10)
 			list_folders
 			;;
-		12)
+		11)
 			view_folder
 			;;
-		13)
+		12)
 			modify_folder
 			;;
-		14)
+		13)
 			list_folder_attributes
 			;;
-		15)
+		14)
 			install_ssh
 			;;
-		16)
+		15)
 			remove_ssh
 			;;
-		17)
+		16)
 			status_ssh
 			;;
-		18)
+		17)
 			ssh_on_off
 			;;
 		0)
 			exit
 			;;
 		esac
-	read -p "press enter to continue"
+	if [ $FLAG -eq 0 ] ; then	
+		read -p "press enter to continue"
+	fi
+	FLAG=0
 done
