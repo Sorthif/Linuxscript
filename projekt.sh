@@ -313,17 +313,28 @@ folder_is_sticky()
 	fi
 }
 
+folder_is_setgid()
+{
+	if [ -g $1 ] ; then       
+		ISSETGID="ON"
+	else
+		ISSETGID="OFF"
+	fi
+}
+
 list_folder_attributes_help()
 {
 	ls -ld $FOLDERNAME &> /dev/null
 	if [ $? -eq 0 ] ; then
 		folder_is_sticky $FOLDERNAME       ### TO SHOW ###
+		folder_is_setgid $FOLDERNAME
 cat <<END
 `stat $FOLDERNAME | cut -c9- | egrep ^[a-Z]+`
 -----------------------------------------------------------
 Owner:          `ls -ld $FOLDERNAME | cut --delimiter=' ' -f 3`/`ls -ld $FOLDERNAME |cut --delimiter=' ' -f 4`
 Permissions:    `ls -ld $FOLDERNAME | cut --delimiter=' ' -f 1`
 Sticky bit:     `echo $ISSTICKY`
+Setgid:         `echo $ISSETGID`
 Last modified:  `ls -ld $FOLDERNAME | cut --delimiter=' ' -f 6-8`
 END
 	fi
@@ -354,13 +365,15 @@ modify_folder()
 		clear
 		list_folder_attributes_help       ### TO SHOW ###
 		folder_is_sticky $FOLDERNAME
+		folder_is_setgid $FOLDERNAME
 		echo "What would you like to change about $FOLDERNAME?"
 cat <<END
 1)               User owner
 2)               Group owner
 3)               Sticky bit ($ISSTICKY)
-4)               Last modified
-5)               Permissions
+4)               Setgid ($ISSETGID)
+5)               Last modified
+6)               Permissions
 
 0)               Done
 END
@@ -392,6 +405,15 @@ END
 			fi
 			;;
 		4)
+			if [ $ISSETGID = "OFF" ] ; then
+				sudo chmod g+s $FOLDERNAME
+			elif [ $ISSETGID = "ON" ] ; then
+				sudo chmod g-s $FOLDERNAME
+			else
+				echo "Faulty input"
+			fi
+			;;
+		5)
 			echo "Change last modified, enter time: (ex: now, 11:15, 16 october 2011 23:00 ...)"
 			read TIME
 			sudo touch -c $FOLDERNAME --date=$TIME        ### TO SHOW, c=do not create any files ###
@@ -399,7 +421,7 @@ END
 				echo "Updated last modified for $FOLDERNAME"
 			fi
 			;;
-		5)
+		6)
 			clear
 			list_folder_attributes_help
                                        ### TO SHOW ### 
